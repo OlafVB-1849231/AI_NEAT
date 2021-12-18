@@ -1,0 +1,171 @@
+import random 
+from Gene import Gene 
+
+class Genome:
+
+    mutate_connection_chance = 0.25
+    perturb_chance = 0.90
+    crossover_chance = 0.75
+    link_mutate_chance = 2.0
+    node_mutation_chance = 0.5
+    bias_mutation_chance = 0.4
+    disable_mutation_chance = 0.4
+    enable_mutation_chance = 0.2 
+    step = 0.1
+
+
+    def __init__(self, amount_inputs, amount_outputs, max_hidden_neurons):
+        self.genes = [] 
+        self.current_inovation = 1  
+        self.amount_inputs = amount_inputs
+        self.amount_outputs = amount_outputs
+        self.amount_neurons = amount_inputs
+        self.max_hidden_neurons = max_hidden_neurons
+    
+
+    def new_innovation(self):
+        temp = self.current_inovation
+        self.current_inovation += 1 
+        return temp
+
+
+    def new_neuron_number(self):
+        temp = self.amount_neurons
+        self.amount_neurons += 1 
+        return temp
+
+
+    def point_mutate(self):
+        for gene in self.genes:
+
+            if random.random() < self.perturb_chance:
+                gene.weight = gene.weight + random.random() * self.step * 2 - self.step
+            else:
+                gene.weight = random.random() * 4 - 2
+
+
+    def random_neuron(self, allow_input):
+        possibilities = set()
+
+        # Add inputs
+        if allow_input:
+            for i in range(0, self.amount_inputs):
+                possibilities.add(i)
+
+        # Add outputs
+        for i in range(self.max_hidden_neurons + self.amount_inputs, self.max_hidden_neurons + self.amount_inputs + self.amount_outputs):
+            possibilities.add(i)
+
+        # Add hidden
+        for gene in self.genes:
+            if allow_input or gene.from_neuron_id > self.amount_inputs - 1:
+                possibilities.add(gene.from_neuron_id)
+            if allow_input or gene.to_neuron_id > self.amount_inputs - 1:
+                possibilities.add(gene.to_neuron_id)
+
+        # Return a random node
+        if len(possibilities) >= 1: 
+            return random.sample(list(possibilities), 1)[0]
+
+        else:
+            return None
+
+
+    def contains_link(self, from_id, to_id):
+        for gene in self.genes:
+            if gene.from_neuron_id == from_id and gene.to_neuron_id == to_id:
+                return True
+
+        return False
+
+
+
+    def link_mutate_bias(self):
+        from_neuron = -1
+        to_neuron = self.random_neuron(False)
+
+        if to_neuron != None: 
+            if not self.contains_link(from_neuron, to_neuron):
+                new_gene = Gene(self.new_innovation(), -1, to_neuron, random.random() * 4 - 2)
+                self.genes.append(new_gene)
+
+
+    # Try to add a new link
+    # TODO: add explicit bias node option
+    def link_mutate(self):
+        from_neuron = self.random_neuron(True) 
+        to_neuron = self.random_neuron(False)
+
+        # If both inputs
+        if from_neuron <= self.amount_inputs - 1 and to_neuron <= self.amount_inputs - 1:
+            return 
+
+        # Swap 
+        if to_neuron <= self.amount_inputs - 1: 
+            temp = to_neuron 
+            from_neuron = to_neuron 
+            to_neuron = temp 
+
+        if not self.contains_link(from_neuron, to_neuron):
+            new_gene = Gene(self.new_innovation(), from_neuron, to_neuron, random.random() * 4 - 2)
+            self.genes.append(new_gene)
+
+    # Add a new node (inbetween an existing link)
+    def node_mutate(self):
+        
+        # If no genes can't do anything
+        if len(self.genes) <= 0: 
+            return 
+
+        
+        random_gene = random.sample(self.genes, 1)[0]
+
+        if not random_gene.enabled:
+            return 
+
+        random_gene.enabled = False
+        new_neuron_num = self.new_neuron_number()
+
+        first_new_gene = Gene(self.new_innovation(), random_gene.from_neuron_id, new_neuron_num)
+        second_new_gene = Gene(self.new_innovation(), new_neuron_num, random_gene.to_neuron_id, random_gene.weight)
+
+
+        self.genes.append(first_new_gene)
+        self.genes.append(second_new_gene)
+
+
+    def enable_disable_mutate(self, mutate_to):
+        genes_to_mutate = []
+
+        for i in range(0, len(self.genes)):
+            if self.genes[i].enabled != mutate_to:
+                genes_to_mutate.append(i)
+
+        if len(genes_to_mutate) < 1:
+            return 
+
+        random_gene = random.sample(genes_to_mutate, 1)[0]
+        self.genes[random_gene].enabled = mutate_to
+
+
+
+    def mutate(self):
+        if random.random() < self.mutate_connection_chance:
+            self.point_mutate()
+
+        if random.random() < self.link_mutate_chance:
+            self.link_mutate()
+
+        if random.random() < self.node_mutation_chance:
+            self.node_mutate()   
+
+        if random.random() < self.disable_mutation_chance:
+            self.enable_disable_mutate(False)
+
+        if random.random() < self.enable_mutation_chance:
+            self.enable_disable_mutate(True)
+
+    def print_genes(self):
+        print("Amount genes: " + str(len(self.genes)))
+        for gene in self.genes:
+            gene.print()
