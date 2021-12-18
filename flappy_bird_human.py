@@ -11,8 +11,6 @@ import pygame
 import random
 import os
 import time
-import Main
-from Genome import Genome
 
 pygame.font.init()  # init font
 
@@ -305,7 +303,7 @@ def draw_window(win, birds, pipes, base, score, gen, pipe_ind):
     pygame.display.update()
 
 
-def eval_genomes(network):
+def eval_genomes():
     """
     runs the simulation of the current population of
     birds and sets their fitness based on the distance they
@@ -364,17 +362,9 @@ def eval_genomes(network):
             # send bird location, top pipe location and bottom pipe location and determine from network whether to jump or not
             #output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)))
             output = 0
-            outputs = Main.eval([bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)], network)
-            
-            if outputs[0] != None: 
-                print("output is: " + str(outputs[0]))
-                output = outputs[0]
-
-            
-            # output = 0
-            # keys=pygame.key.get_pressed()
-            # if keys[pygame.K_LEFT]:
-            #     output = 1
+            keys=pygame.key.get_pressed()
+            if keys[pygame.K_LEFT]:
+                output = 1
 
             if output > 0.5:  # we use a tanh activation function so result will be between -1 and 1. if over 0.5 jump
                 bird.jump()
@@ -459,19 +449,4 @@ def run(config_file):
 #     run(config_path)
 
 
-
-for i in range(0, 100):
-    testGenome = Genome(Main.AMOUNT_INPUTS, Main.AMOUNT_OUTPUTS, Main.MAX_HIDDEN)
-    testGenome.mutate()
-    network = Main.generateNetwork(testGenome)
-
-
-    if network[103] != None:
-        for j in range(0, 3):
-            testGenome.print_genes()
-            eval_genomes(network) 
-
-            testGenome.mutate() 
-            network = Main.generateNetwork(testGenome)
-            eval_genomes(network) 
-
+eval_genomes()

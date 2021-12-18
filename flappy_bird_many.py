@@ -12,7 +12,10 @@ import random
 import os
 import time
 import Main
+from Main import AMOUNT_INPUTS,AMOUNT_OUTPUTS,MAX_HIDDEN
 from Genome import Genome
+from Evaluation import Evaluation
+from Pool import Individual,Species,Pool
 
 pygame.font.init()  # init font
 
@@ -305,7 +308,7 @@ def draw_window(win, birds, pipes, base, score, gen, pipe_ind):
     pygame.display.update()
 
 
-def eval_genomes(network):
+def eval_genomes(evaluations):
     """
     runs the simulation of the current population of
     birds and sets their fitness based on the distance they
@@ -322,7 +325,9 @@ def eval_genomes(network):
     birds = []
     ge = []
 
-    birds.append(Bird(230,350))
+
+    for i in range(0, len(evaluations)):
+        birds.append(Bird(230,350))
 
     # for genome_id, genome in genomes:
     #     genome.fitness = 0  # start with fitness level of 0
@@ -336,9 +341,13 @@ def eval_genomes(network):
     score = 0
 
     clock = pygame.time.Clock()
-
+    firstd = True
     run = True
     while run and len(birds) > 0:
+        if len(birds) != len(evaluations):
+            print("FUCK")
+
+
         clock.tick(30)
 
         for event in pygame.event.get():
@@ -353,24 +362,30 @@ def eval_genomes(network):
             if len(pipes) > 1 and birds[0].x > pipes[0].x + pipes[0].PIPE_TOP.get_width():  # determine whether to use the first or second
                 pipe_ind = 1                                                                 # pipe on the screen for neural network input
 
-
-
-
+        
 
         for x, bird in enumerate(birds):  # give each bird a fitness of 0.1 for each frame it stays alive
+            evaluations[x].increase_fitness(-0.1)
             #ge[x].fitness += 0.1
             bird.move()
 
             # send bird location, top pipe location and bottom pipe location and determine from network whether to jump or not
             #output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)))
             output = 0
-            outputs = Main.eval([bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)], network)
-            
+            outputs = evaluations[x].eval([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
+
+            # print([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
+            # print(outputs)
+
+            # if(x == 0 and firstd):
+            #     print(outputs)
+            #     firstd = False
+
+
             if outputs[0] != None: 
-                print("output is: " + str(outputs[0]))
+                #print("output is: " + str(outputs[0]))
                 output = outputs[0]
 
-            
             # output = 0
             # keys=pygame.key.get_pressed()
             # if keys[pygame.K_LEFT]:
@@ -378,6 +393,7 @@ def eval_genomes(network):
 
             if output > 0.5:  # we use a tanh activation function so result will be between -1 and 1. if over 0.5 jump
                 bird.jump()
+                
 
         base.move()
 
@@ -388,10 +404,13 @@ def eval_genomes(network):
             # check for collision
             for bird in birds:
                 if pipe.collide(bird, win):
+                    evaluations[birds.index(bird)].increase_fitness(-1)
+                    evaluations.pop(birds.index(bird))
                     #ge[birds.index(bird)].fitness -= 1
                     #nets.pop(birds.index(bird))
                     #ge.pop(birds.index(bird))
                     birds.pop(birds.index(bird))
+                    
 
             if pipe.x + pipe.PIPE_TOP.get_width() < 0:
                 rem.append(pipe)
@@ -405,6 +424,7 @@ def eval_genomes(network):
             # can add this line to give more reward for passing through a pipe (not required)
             #for genome in ge:
             #    genome.fitness += 5
+            evaluations[x].increase_fitness(-5)
             pipes.append(Pipe(WIN_WIDTH))
 
         for r in rem:
@@ -414,6 +434,7 @@ def eval_genomes(network):
             if bird.y + bird.img.get_height() - 10 >= FLOOR or bird.y < -50:
                 #nets.pop(birds.index(bird))
                 #ge.pop(birds.index(bird))
+                evaluations.pop(birds.index(bird))
                 birds.pop(birds.index(bird))
 
         draw_window(WIN, birds, pipes, base, score, 1, pipe_ind)
@@ -459,19 +480,38 @@ def run(config_file):
 #     run(config_path)
 
 
+pool = Pool(AMOUNT_INPUTS, MAX_HIDDEN, AMOUNT_OUTPUTS)
+pool.initialize(10)
+
+
+evaluation_list = []
+
+for species in pool.species_list:
+    for individual in species.population:
+        evaluation_list.append(Evaluation(individual))
+        individual.genome.print_genes()
+        
 
 for i in range(0, 100):
-    testGenome = Genome(Main.AMOUNT_INPUTS, Main.AMOUNT_OUTPUTS, Main.MAX_HIDDEN)
-    testGenome.mutate()
-    network = Main.generateNetwork(testGenome)
+    for species in pool.species_list:
+        for individual in species.population:
+            evaluation_list.append(Evaluation(individual))
+
+    eval_genomes(evaluation_list) 
+    print("Generation: " + str(i))
+    print("Total fitness: " + str(pool.total_average_fitness()))
+
+    # for species in pool.species_list:
+    #     for individual in species.population:
+    #         print(individual.fitness)
+
+    pool.new_generation()
 
 
-    if network[103] != None:
-        for j in range(0, 3):
-            testGenome.print_genes()
-            eval_genomes(network) 
 
-            testGenome.mutate() 
-            network = Main.generateNetwork(testGenome)
-            eval_genomes(network) 
+    print(len(pool.species_list))
+    pool.species_list[0].population[0].genome.print_genes()
+
+
+            
 

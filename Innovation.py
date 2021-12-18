@@ -4,7 +4,7 @@ class Innovation:
         self.value = start
 
 
-    def new_innovation():
+    def new_innovation(self):
         temp = self.value 
 
         self.value += 1

@@ -1,5 +1,6 @@
 import random 
 from Gene import Gene 
+from Innovation import Innovation
 
 class Genome:
 
@@ -14,19 +15,18 @@ class Genome:
     step = 0.1
 
 
-    def __init__(self, amount_inputs, amount_outputs, max_hidden_neurons):
+    def __init__(self, amount_inputs, amount_outputs, max_hidden_neurons, innovation):
         self.genes = [] 
         self.current_inovation = 1  
         self.amount_inputs = amount_inputs
         self.amount_outputs = amount_outputs
         self.amount_neurons = amount_inputs
         self.max_hidden_neurons = max_hidden_neurons
+        self.innovation = innovation
     
 
     def new_innovation(self):
-        temp = self.current_inovation
-        self.current_inovation += 1 
-        return temp
+        return self.innovation.new_innovation()
 
 
     def new_neuron_number(self):
@@ -39,9 +39,9 @@ class Genome:
         for gene in self.genes:
 
             if random.random() < self.perturb_chance:
-                gene.weight = gene.weight + random.random() * self.step * 2 - self.step
+                gene.weight = gene.weight + random.uniform(-1, 1) * self.step * 2 - self.step
             else:
-                gene.weight = random.random() * 4 - 2
+                gene.weight = random.uniform(-1, 1)
 
 
     def random_neuron(self, allow_input):
@@ -86,9 +86,14 @@ class Genome:
 
         if to_neuron != None: 
             if not self.contains_link(from_neuron, to_neuron):
-                new_gene = Gene(self.new_innovation(), -1, to_neuron, random.random() * 4 - 2)
+                new_gene = Gene(self.new_innovation(), -1, to_neuron, random.uniform(-1, 1))
                 self.genes.append(new_gene)
 
+
+    def is_output_neuron(self, neuron_id):
+        if neuron_id >= self.amount_inputs + self.max_hidden_neurons:
+            return True
+        
 
     # Try to add a new link
     # TODO: add explicit bias node option
@@ -106,8 +111,11 @@ class Genome:
             from_neuron = to_neuron 
             to_neuron = temp 
 
+        if self.is_output_neuron(from_neuron):
+            return
+
         if not self.contains_link(from_neuron, to_neuron):
-            new_gene = Gene(self.new_innovation(), from_neuron, to_neuron, random.random() * 4 - 2)
+            new_gene = Gene(self.new_innovation(), from_neuron, to_neuron, random.uniform(-1, 1))
             self.genes.append(new_gene)
 
     # Add a new node (inbetween an existing link)
@@ -165,7 +173,43 @@ class Genome:
         if random.random() < self.enable_mutation_chance:
             self.enable_disable_mutate(True)
 
+
+        # Temp: 
+        new_genes = []
+        for gene in self.genes:
+            if gene.enabled:
+                new_genes.append(gene) 
+            else: 
+                self.amount_neurons -= 1
+                if self.amount_neurons < 0:
+                    self.amount_neurons = 0
+
+        self.genes = new_genes
+
     def print_genes(self):
         print("Amount genes: " + str(len(self.genes)))
         for gene in self.genes:
             gene.print()
+
+    
+    def deepcopy(self):
+        new_gene_list = []
+
+        for gene in self.genes:
+            new_gene_list.append(gene.deepcopy())
+
+        new_genome = Genome(self.amount_inputs, self.amount_outputs, self.max_hidden_neurons, self.innovation)
+        new_genome.genes = new_gene_list 
+        new_genome.current_inovation = self.current_inovation
+        new_genome.amount_neurons = self.amount_neurons
+
+
+        return new_genome
+
+
+    def get_gene_with_innovation_number(self, innovation_number):
+        for gene in self.genes:
+            if gene.innovation_number == innovation_number:
+                return gene 
+
+        return None

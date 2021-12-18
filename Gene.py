@@ -10,3 +10,7 @@ class Gene:
     def print(self):
         print("Gene: innovation number - from - to - weight - enabled")
         print("            " + str(self.innovation_number) + " - " + str(self.from_neuron_id) + " - " + str(self.to_neuron_id) + " - " + str(self.weight) + " - " + str(self.enabled))
+
+
+    def deepcopy(self):
+        return Gene(self.innovation_number, self.from_neuron_id, self.to_neuron_id, self.weight, self.enabled)
