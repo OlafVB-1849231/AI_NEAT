@@ -345,9 +345,6 @@ def eval_genomes(evaluations):
     firstd = True
     run = True
     while run and len(birds) > 0:
-        if len(birds) != len(evaluations):
-            print("FUCK")
-
 
         clock.tick(30)
 
@@ -375,7 +372,7 @@ def eval_genomes(evaluations):
             output = 0
             # outputs = evaluations[x].eval([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
 
-            outputs = evaluations[x].eval([bird.y / 730, abs(pipes[pipe_ind].height) / 730, abs(pipes[pipe_ind].bottom) / 730])
+            outputs = evaluations[x].eval([bird.y / 730, abs(pipes[pipe_ind].height) / 730, abs(pipes[pipe_ind].bottom) / 730, random.random(), random.random(), random.random()])
 
 
             # print([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
@@ -491,7 +488,7 @@ def run(config_file):
 
 
 pool = Pool(AMOUNT_INPUTS, MAX_HIDDEN, AMOUNT_OUTPUTS)
-pool.initialize(10)
+pool.initialize(300)
 
 
 evaluation_list = []
@@ -502,10 +499,15 @@ for species in pool.species_list:
         individual.genome.print_genes()
         
 
-for i in range(0, 100):
+for i in range(0, 1000):
+
+    indiv_amount = 0
     for species in pool.species_list:
         for individual in species.population:
             evaluation_list.append(Evaluation(individual))
+            indiv_amount += 1 
+
+    print("amount individuals: " + str(indiv_amount))
 
     eval_genomes(evaluation_list) 
     print("Generation: " + str(i))
@@ -519,9 +521,9 @@ for i in range(0, 100):
 
 
 
-    print(len(pool.species_list))
-    #pool.species_list[0].population[0].genome.print_genes()
+    print("amount species: " + str(len(pool.species_list)))
     try:
+        pool.get_best_individual().genome.print_genes()
         Visualize.visualize(pool.get_best_individual().genome)
     except:
         pass

@@ -3,9 +3,9 @@ from Gene import Gene
 from Neuron import Neuron
 from Connection import Connection
 
-AMOUNT_INPUTS = 3
+AMOUNT_INPUTS = 6
 AMOUNT_OUTPUTS = 1
-MAX_HIDDEN = 10
+MAX_HIDDEN = 100
 
 def generateNetwork(genome):
     neurons = []

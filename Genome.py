@@ -4,15 +4,15 @@ from Innovation import Innovation
 
 class Genome:
 
-    mutate_connection_chance = 0.25
+    mutate_connection_chance = 0.6
     perturb_chance = 0.90
     crossover_chance = 0.75
-    link_mutate_chance = 2.0
-    node_mutation_chance = 0.5
-    bias_mutation_chance = 0.4
-    disable_mutation_chance = 0.4
-    enable_mutation_chance = 0.2 
-    step = 0.1
+    link_mutate_chance = 0.15
+    node_mutation_chance = 0.05
+    bias_mutation_chance = 0.05
+    disable_mutation_chance = 0.1
+    enable_mutation_chance = 0.05
+    step = 0.05
 
 
     def __init__(self, amount_inputs, amount_outputs, max_hidden_neurons, innovation):
@@ -39,7 +39,7 @@ class Genome:
         for gene in self.genes:
 
             if random.random() < self.perturb_chance:
-                gene.weight = gene.weight + random.uniform(-1, 1) * self.step * 2 - self.step
+                gene.weight = gene.weight + random.uniform(-1, 1) * self.step 
             else:
                 gene.weight = random.uniform(-1, 1)
 
@@ -93,7 +93,13 @@ class Genome:
     def is_output_neuron(self, neuron_id):
         if neuron_id >= self.amount_inputs + self.max_hidden_neurons:
             return True
+        return False
+
+    def is_input_neuron(self, neuron_id):
+        if neuron_id < self.amount_inputs:
+            return True 
         
+        return False
 
     # Try to add a new link
     # TODO: add explicit bias node option
@@ -102,15 +108,20 @@ class Genome:
         to_neuron = self.random_neuron(False)
 
         # If both inputs
-        if from_neuron <= self.amount_inputs - 1 and to_neuron <= self.amount_inputs - 1:
-            return 
+        if self.is_input_neuron(from_neuron) and self.is_input_neuron(to_neuron):
+            return
+
+        # No self loops
+        if from_neuron == to_neuron:
+            return
 
         # Swap 
-        if to_neuron <= self.amount_inputs - 1: 
+        if self.is_input_neuron(to_neuron): 
             temp = to_neuron 
             from_neuron = to_neuron 
             to_neuron = temp 
 
+        # Output neuron can have no outgoing arrows
         if self.is_output_neuron(from_neuron):
             return
 
@@ -167,6 +178,9 @@ class Genome:
         if random.random() < self.node_mutation_chance:
             self.node_mutate()   
 
+        if random.random() < self.bias_mutation_chance:
+            self.link_mutate_bias()
+
         if random.random() < self.disable_mutation_chance:
             self.enable_disable_mutate(False)
 
@@ -174,17 +188,17 @@ class Genome:
             self.enable_disable_mutate(True)
 
 
-        # Temp: 
-        new_genes = []
-        for gene in self.genes:
-            if gene.enabled:
-                new_genes.append(gene) 
-            else: 
-                self.amount_neurons -= 1
-                if self.amount_neurons < 0:
-                    self.amount_neurons = 0
+        # # Temp: 
+        # new_genes = []
+        # for gene in self.genes:
+        #     if gene.enabled:
+        #         new_genes.append(gene) 
+        #     else: 
+        #         self.amount_neurons -= 1
+        #         if self.amount_neurons < 0:
+        #             self.amount_neurons = 0
 
-        self.genes = new_genes
+        # self.genes = new_genes
 
     def print_genes(self):
         print("Amount genes: " + str(len(self.genes)))

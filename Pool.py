@@ -5,7 +5,7 @@ from Innovation import Innovation
 
 DELTA_DISJOINT = 2.0
 DELTA_WEIGHTS = 0.4
-DELTA_THRESHOLD = 1.0
+DELTA_THRESHOLD = 2.5
 
 # TODO: check if this sorts from low to high or high to low
 def compare_individual_fitness(item1):
@@ -25,7 +25,7 @@ def crossover(individual1, individual2):
 
         gene2 = genome2.get_gene_with_innovation_number(gene1_innovation_number)
 
-        if gene2 != None and math.random < 0.5 and gene2.enabled:
+        if gene2 != None and random.random() < 0.5 and gene2.enabled:
             new_genes.append(gene2.deepcopy())
         else:
             new_genes.append(gene1.deepcopy())
