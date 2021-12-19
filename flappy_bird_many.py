@@ -16,6 +16,7 @@ from Main import AMOUNT_INPUTS,AMOUNT_OUTPUTS,MAX_HIDDEN
 from Genome import Genome
 from Evaluation import Evaluation
 from Pool import Individual,Species,Pool
+import Visualize
 
 pygame.font.init()  # init font
 
@@ -365,14 +366,17 @@ def eval_genomes(evaluations):
         
 
         for x, bird in enumerate(birds):  # give each bird a fitness of 0.1 for each frame it stays alive
-            evaluations[x].increase_fitness(-0.1)
+            evaluations[x].increase_fitness(0.1)
             #ge[x].fitness += 0.1
             bird.move()
 
             # send bird location, top pipe location and bottom pipe location and determine from network whether to jump or not
             #output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)))
             output = 0
-            outputs = evaluations[x].eval([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
+            # outputs = evaluations[x].eval([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
+
+            outputs = evaluations[x].eval([bird.y / 730, abs(pipes[pipe_ind].height) / 730, abs(pipes[pipe_ind].bottom) / 730])
+
 
             # print([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
             # print(outputs)
@@ -424,8 +428,14 @@ def eval_genomes(evaluations):
             # can add this line to give more reward for passing through a pipe (not required)
             #for genome in ge:
             #    genome.fitness += 5
-            evaluations[x].increase_fitness(-5)
+            try:
+                evaluations[x].increase_fitness(5)
+            except:
+                pass
             pipes.append(Pipe(WIN_WIDTH))
+
+            if score >= 30:
+                return
 
         for r in rem:
             pipes.remove(r)
@@ -510,7 +520,12 @@ for i in range(0, 100):
 
 
     print(len(pool.species_list))
-    pool.species_list[0].population[0].genome.print_genes()
+    #pool.species_list[0].population[0].genome.print_genes()
+    try:
+        Visualize.visualize(pool.get_best_individual().genome)
+    except:
+        pass
+
 
 
             

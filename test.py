@@ -1,6 +1,7 @@
 import Main 
 from Pool import Individual,Species,Pool
 import random
+import Visualize
 
 AMOUNT_INPUTS = 3
 AMOUNT_OUTPUTS = 1
@@ -16,3 +17,6 @@ for species in pool.species_list:
         individual.fitness = random.random() * 1000
 
 pool.new_generation()
+
+
+Visualize.visualize(pool.species_list[0].population[0].genome)

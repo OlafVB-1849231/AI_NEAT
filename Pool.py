@@ -258,6 +258,17 @@ class Pool:
             self.add_to_species(child)
 
 
+    def get_best_individual(self):
+        max_individual = None 
+        max_fitness = 0
+
+        for species in self.species_list:
+            for individual in species.population: 
+                if individual.fitness > max_fitness:
+                    max_individual = individual 
+                    max_fitness = individual.fitness
+
+        return max_individual
 
 
     def initialize(self, global_population_size):
