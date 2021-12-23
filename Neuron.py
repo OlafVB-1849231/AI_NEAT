@@ -1,5 +1,8 @@
 import numpy as np 
 
+def htan(x):
+  return (np.exp(x) - np.exp(-x))/(np.exp(x) + np.exp(-x))
+
 class Neuron:
 
 
@@ -28,8 +31,10 @@ class Neuron:
 
     def activation_function(self, value):
         # Sigmoid 
-        return 1/(1 + np.exp(-value))
+        #return 1/(1 + np.exp(-value))
 
+
+        return htan(value)
 
 
     

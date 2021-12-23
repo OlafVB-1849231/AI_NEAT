@@ -17,6 +17,7 @@ from Genome import Genome
 from Evaluation import Evaluation
 from Pool import Individual,Species,Pool
 import Visualize
+import pickle
 
 pygame.font.init()  # init font
 
@@ -299,17 +300,17 @@ def draw_window(win, birds, pipes, base, score, gen, pipe_ind):
     win.blit(score_label, (WIN_WIDTH - score_label.get_width() - 15, 10))
 
     # generations
-    # score_label = STAT_FONT.render("Gens: " + str(gen-1),1,(255,255,255))
-    # win.blit(score_label, (10, 10))
+    score_label = STAT_FONT.render("Generation: " + str(gen),1,(255,255,255))
+    win.blit(score_label, (10, 10))
 
     # alive
-    # score_label = STAT_FONT.render("Alive: " + str(len(birds)),1,(255,255,255))
-    # win.blit(score_label, (10, 50))
+    score_label = STAT_FONT.render("Alive: " + str(len(birds)),1,(255,255,255))
+    win.blit(score_label, (10, 50))
 
     pygame.display.update()
 
 
-def eval_genomes(evaluations):
+def eval_genomes(evaluations, generation):
     """
     runs the simulation of the current population of
     birds and sets their fitness based on the distance they
@@ -370,9 +371,9 @@ def eval_genomes(evaluations):
             # send bird location, top pipe location and bottom pipe location and determine from network whether to jump or not
             #output = nets[birds.index(bird)].activate((bird.y, abs(bird.y - pipes[pipe_ind].height), abs(bird.y - pipes[pipe_ind].bottom)))
             output = 0
-            # outputs = evaluations[x].eval([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
+            outputs = evaluations[x].eval([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
 
-            outputs = evaluations[x].eval([bird.y / 730, abs(pipes[pipe_ind].height) / 730, abs(pipes[pipe_ind].bottom) / 730, random.random(), random.random(), random.random()])
+            #outputs = evaluations[x].eval([bird.y / 730, abs(pipes[pipe_ind].height) / 730, abs(pipes[pipe_ind].bottom) / 730, random.random(), random.random(), random.random()])
 
 
             # print([bird.y / 730, abs(bird.y - pipes[pipe_ind].height) / 730, abs(bird.y - pipes[pipe_ind].bottom) / 730])
@@ -444,7 +445,7 @@ def eval_genomes(evaluations):
                 evaluations.pop(birds.index(bird))
                 birds.pop(birds.index(bird))
 
-        draw_window(WIN, birds, pipes, base, score, 1, pipe_ind)
+        draw_window(WIN, birds, pipes, base, score, generation, pipe_ind)
 
         # break if score gets large enough
         '''if score > 20:
@@ -488,16 +489,11 @@ def run(config_file):
 
 
 pool = Pool(AMOUNT_INPUTS, MAX_HIDDEN, AMOUNT_OUTPUTS)
-pool.initialize(300)
+pool.initialize(100)
 
 
 evaluation_list = []
 
-for species in pool.species_list:
-    for individual in species.population:
-        evaluation_list.append(Evaluation(individual))
-        individual.genome.print_genes()
-        
 
 for i in range(0, 1000):
 
@@ -509,7 +505,7 @@ for i in range(0, 1000):
 
     print("amount individuals: " + str(indiv_amount))
 
-    eval_genomes(evaluation_list) 
+    eval_genomes(evaluation_list, i) 
     print("Generation: " + str(i))
     print("Total fitness: " + str(pool.total_average_fitness()))
 
@@ -517,14 +513,20 @@ for i in range(0, 1000):
     #     for individual in species.population:
     #         print(individual.fitness)
 
+    filehandler = open("flappyBird/pool" + str(i), 'wb') 
+    pickle.dump(pool, filehandler)
+
     pool.new_generation()
 
+
+    
 
 
     print("amount species: " + str(len(pool.species_list)))
     try:
-        pool.get_best_individual().genome.print_genes()
-        Visualize.visualize(pool.get_best_individual().genome)
+        pass
+        #pool.get_best_individual().genome.print_genes()
+        #Visualize.visualize(pool.get_best_individual().genome)
     except:
         pass
 

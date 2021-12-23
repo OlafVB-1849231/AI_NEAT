@@ -10,7 +10,7 @@ class Genome:
     link_mutate_chance = 0.15
     node_mutation_chance = 0.05
     bias_mutation_chance = 0.05
-    disable_mutation_chance = 0.1
+    disable_mutation_chance = 0.06
     enable_mutation_chance = 0.05
     step = 0.05
 
